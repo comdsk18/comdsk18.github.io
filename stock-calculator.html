@@ -1,0 +1,798 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Investment Calculator</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #172033;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --green: #15803d;
+      --red: #dc2626;
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 28px 16px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .container { max-width: 1100px; margin: auto; }
+
+    header { margin-bottom: 24px; }
+
+    header h1 {
+      margin: 0 0 8px;
+      font-size: clamp(25px, 4vw, 34px);
+    }
+
+    header p { color: var(--muted); margin: 0; line-height: 1.5; }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 24px 0;
+    }
+
+    .tab {
+      border: 1px solid var(--border);
+      background: white;
+      color: var(--muted);
+      border-radius: 9px;
+      padding: 11px 15px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .tab.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 18px;
+      box-shadow: 0 3px 12px rgba(15, 23, 42, .035);
+    }
+
+    .card h2 { margin: 0 0 8px; font-size: 21px; }
+    .description { color: var(--muted); margin: 0 0 22px; line-height: 1.5; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 17px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 7px;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 15px;
+      outline: none;
+      background: white;
+      color: var(--text);
+    }
+
+    .field input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, .1);
+    }
+
+    .hint {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 5px;
+    }
+
+    .actions { display: flex; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
+
+    button {
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .primary-btn, .secondary-btn, .danger-btn {
+      border: 0;
+      border-radius: 8px;
+      padding: 11px 17px;
+      font-weight: 700;
+    }
+
+    .primary-btn { background: var(--primary); color: white; }
+    .secondary-btn { background: #e2e8f0; color: #334155; }
+    .danger-btn { background: #fee2e2; color: #991b1b; }
+
+    .primary-btn:hover { background: #1d4ed8; }
+    .secondary-btn:hover { background: #cbd5e1; }
+
+    .results {
+      display: none;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .results.show { display: block; }
+    .results h3 { margin: 0 0 14px; font-size: 17px; }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .result-item {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      padding: 15px;
+      border-radius: 10px;
+      min-width: 0;
+    }
+
+    .result-item .label {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 7px;
+    }
+
+    .result-item .value {
+      font-size: 21px;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .positive { color: var(--green); }
+    .negative { color: var(--red); }
+
+    .message {
+      margin-top: 14px;
+      padding: 12px 14px;
+      background: var(--primary-light);
+      color: #1e40af;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .message.error {
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+
+    .table-wrap { overflow-x: auto; margin-top: 18px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+    }
+
+    th, td {
+      padding: 12px 10px;
+      text-align: right;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    th { background: #f8fafc; color: #475569; }
+    th:first-child, td:first-child { text-align: left; }
+
+    .table-input {
+      width: 110px;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+
+    .remove-btn {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 0;
+      border-radius: 6px;
+      padding: 7px 10px;
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+      margin-top: 18px;
+    }
+
+    footer {
+      color: var(--muted);
+      text-align: center;
+      font-size: 12px;
+      margin-top: 28px;
+    }
+
+    @media (max-width: 650px) {
+      body { padding: 20px 12px; }
+      .card { padding: 18px; }
+      .form-grid, .result-grid { grid-template-columns: 1fr; }
+      .tab { flex: 1 1 calc(50% - 8px); }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>Stock Investment Calculator</h1>
+    <p>Calculate stock averages, purchase quantities, investment requirements and portfolio performance.</p>
+  </header>
+
+  <nav class="tabs" aria-label="Calculator navigation">
+    <button class="tab active" data-tab="averaging">Stock Averaging</button>
+    <button class="tab" data-tab="budget">Budget Purchase</button>
+    <button class="tab" data-tab="purchase">New Purchase Average</button>
+    <button class="tab" data-tab="portfolio">Portfolio Tracker</button>
+  </nav>
+
+  <!-- STOCK AVERAGING -->
+  <section class="panel active" id="averaging">
+    <div class="card">
+      <h2>Stock Averaging Calculator</h2>
+      <p class="description">
+        Find how many additional shares you need to buy, and how much money
+        you need to invest, to reach your desired average purchase price.
+      </p>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="avgShares">Existing shares</label>
+          <input type="number" id="avgShares" min="1" step="1" placeholder="e.g. 100">
+        </div>
+        <div class="field">
+          <label for="avgPrice">Existing average price (₹)</label>
+          <input type="number" id="avgPrice" min="0" step="any" placeholder="e.g. 250">
+        </div>
+        <div class="field">
+          <label for="buyPrice">Current market price (₹)</label>
+          <input type="number" id="buyPrice" min="0" step="any" placeholder="e.g. 180">
+        </div>
+        <div class="field">
+          <label for="targetAvg">Desired average price (₹)</label>
+          <input type="number" id="targetAvg" min="0" step="any" placeholder="e.g. 220">
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="primary-btn" onclick="calculateAveraging()">Calculate</button>
+        <button class="secondary-btn" onclick="resetCalculator('averaging')">Reset</button>
+      </div>
+
+      <div class="results" id="averagingResults" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- BUDGET PURCHASE -->
+  <section class="panel" id="budget">
+    <div class="card">
+      <h2>Budget-Based Share Calculator</h2>
+      <p class="description">
+        Calculate the maximum whole shares you can purchase within your budget.
+        An optional percentage allowance can be included for brokerage and other charges.
+      </p>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="budgetPrice">Current share price (₹)</label>
+          <input type="number" id="budgetPrice" min="0" step="any" placeholder="e.g. 450">
+        </div>
+        <div class="field">
+          <label for="budgetAmount">Total available budget (₹)</label>
+          <input type="number" id="budgetAmount" min="0" step="any" placeholder="e.g. 10000">
+        </div>
+        <div class="field">
+          <label for="feePercent">Charges allowance (%)</label>
+          <input type="number" id="feePercent" min="0" max="100" step="any" value="0">
+          <span class="hint">Optional estimate for transaction charges.</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="primary-btn" onclick="calculateBudget()">Calculate</button>
+        <button class="secondary-btn" onclick="resetCalculator('budget')">Reset</button>
+      </div>
+
+      <div class="results" id="budgetResults" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- NEW PURCHASE AVERAGE -->
+  <section class="panel" id="purchase">
+    <div class="card">
+      <h2>New Purchase Average Calculator</h2>
+      <p class="description">
+        Calculate your revised average after buying additional shares.
+        This calculator also supports estimated transaction charges and an optional target selling price.
+      </p>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="oldShares">Existing shares</label>
+          <input type="number" id="oldShares" min="0" step="1" placeholder="e.g. 100">
+        </div>
+        <div class="field">
+          <label for="oldAverage">Existing average price (₹)</label>
+          <input type="number" id="oldAverage" min="0" step="any" placeholder="e.g. 250">
+        </div>
+        <div class="field">
+          <label for="newShares">Additional shares to buy</label>
+          <input type="number" id="newShares" min="1" step="1" placeholder="e.g. 50">
+        </div>
+        <div class="field">
+          <label for="newPrice">New purchase price (₹)</label>
+          <input type="number" id="newPrice" min="0" step="any" placeholder="e.g. 180">
+        </div>
+        <div class="field">
+          <label for="purchaseFees">Estimated charges (₹)</label>
+          <input type="number" id="purchaseFees" min="0" step="any" value="0">
+        </div>
+        <div class="field">
+          <label for="sellPrice">Target selling price (₹)</label>
+          <input type="number" id="sellPrice" min="0" step="any" placeholder="Optional">
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="primary-btn" onclick="calculatePurchase()">Calculate</button>
+        <button class="secondary-btn" onclick="resetCalculator('purchase')">Reset</button>
+      </div>
+
+      <div class="results" id="purchaseResults" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- PORTFOLIO TRACKER -->
+  <section class="panel" id="portfolio">
+    <div class="card">
+      <h2>Portfolio Tracker</h2>
+      <p class="description">
+        Add your holdings to calculate invested value, current market value,
+        unrealized profit or loss, and portfolio return.
+      </p>
+
+      <div class="table-wrap">
+        <table id="portfolioTable">
+          <thead>
+            <tr>
+              <th>Stock name</th>
+              <th>Quantity</th>
+              <th>Average price (₹)</th>
+              <th>Current price (₹)</th>
+              <th>Invested (₹)</th>
+              <th>Market value (₹)</th>
+              <th>P/L (₹)</th>
+              <th>Return (%)</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="portfolioBody"></tbody>
+        </table>
+      </div>
+
+      <div class="actions">
+        <button class="primary-btn" onclick="addPortfolioRow()">+ Add stock</button>
+        <button class="secondary-btn" onclick="calculatePortfolio()">Calculate portfolio</button>
+        <button class="secondary-btn" onclick="resetPortfolio()">Clear portfolio</button>
+      </div>
+
+      <div class="results" id="portfolioResults" aria-live="polite"></div>
+      <p class="note">
+        Portfolio data is held in this page while it remains open. It is not
+        automatically saved to a server or synchronized across devices.
+      </p>
+    </div>
+  </section>
+
+  <p class="note">
+    <strong>Calculation notes:</strong> These calculators use whole shares and
+    estimated values. Actual brokerage, STT, GST, exchange charges, stamp duty,
+    and other costs depend on your broker and transaction. Tax treatment is not included.
+    This tool is for calculation and educational purposes, not investment advice.
+  </p>
+
+  <footer>Stock Investment Calculator · HTML, CSS & JavaScript</footer>
+</div>
+
+<script>
+  // -----------------------------
+  // COMMON HELPERS
+  // -----------------------------
+
+  const currency = value => "₹" + Number(value).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+
+  const number = value => Number(value).toLocaleString("en-IN", {
+    maximumFractionDigits: 2
+  });
+
+  function getNumber(id) {
+    const value = document.getElementById(id).value.trim();
+    return value === "" ? NaN : Number(value);
+  }
+
+  function valid(...values) {
+    return values.every(value => Number.isFinite(value));
+  }
+
+  function showResults(id, html) {
+    const element = document.getElementById(id);
+    element.innerHTML = html;
+    element.classList.add("show");
+  }
+
+  function errorMessage(message) {
+    return `<div class="message error">${message}</div>`;
+  }
+
+  function resultItem(label, value, extraClass = "") {
+    return `
+      <div class="result-item">
+        <div class="label">${label}</div>
+        <div class="value ${extraClass}">${value}</div>
+      </div>
+    `;
+  }
+
+  function resetCalculator(panelId) {
+    const panel = document.getElementById(panelId);
+    panel.querySelectorAll("input").forEach(input => {
+      input.value = input.defaultValue;
+    });
+    const results = panel.querySelector(".results");
+    results.innerHTML = "";
+    results.classList.remove("show");
+  }
+
+  // -----------------------------
+  // TAB NAVIGATION
+  // -----------------------------
+
+  document.querySelectorAll(".tab").forEach(button => {
+    button.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach(panel => panel.classList.remove("active"));
+
+      button.classList.add("active");
+      document.getElementById(button.dataset.tab).classList.add("active");
+    });
+  });
+
+  // -----------------------------
+  // 1. STOCK AVERAGING
+  // -----------------------------
+
+  function calculateAveraging() {
+    const shares = getNumber("avgShares");
+    const average = getNumber("avgPrice");
+    const marketPrice = getNumber("buyPrice");
+    const target = getNumber("targetAvg");
+
+    const output = "averagingResults";
+
+    if (!valid(shares, average, marketPrice, target) ||
+        shares <= 0 || !Number.isInteger(shares) ||
+        average <= 0 || marketPrice <= 0 || target <= 0) {
+      showResults(output, errorMessage("Enter valid positive values. Existing shares must be a whole number."));
+      return;
+    }
+
+    if (Math.abs(target - marketPrice) < 1e-10) {
+      showResults(output, errorMessage(
+        "The target average equals the current purchase price. Buying at this price will approach that average but will not reach it with a finite number of shares unless your existing average is already the target."
+      ));
+      return;
+    }
+
+    const existingCost = shares * average;
+    const requiredSharesExact = (existingCost - shares * target) / (target - marketPrice);
+
+    if (requiredSharesExact <= 0 || !Number.isFinite(requiredSharesExact)) {
+      showResults(output, errorMessage(
+        "This target cannot be reached by buying at the entered market price. To lower your average, the purchase price must be below your current average and the target must be between the two prices."
+      ));
+      return;
+    }
+
+    // Round UP so the resulting average is at or below the target
+    // when buying below the target, or at/above it when buying above.
+    const requiredShares = Math.ceil(requiredSharesExact - 1e-10);
+    const investment = requiredShares * marketPrice;
+    const totalShares = shares + requiredShares;
+    const newAverage = (existingCost + investment) / totalShares;
+
+    const reached = marketPrice < target
+      ? newAverage <= target + 1e-8
+      : newAverage >= target - 1e-8;
+
+    showResults(output, `
+      <h3>Calculation results</h3>
+      <div class="result-grid">
+        ${resultItem("Additional shares required", number(requiredShares))}
+        ${resultItem("Additional investment", currency(investment))}
+        ${resultItem("Total shares after purchase", number(totalShares))}
+        ${resultItem("New average price", currency(newAverage))}
+        ${resultItem("Existing investment", currency(existingCost))}
+        ${resultItem("Total investment", currency(existingCost + investment))}
+      </div>
+      <div class="message">
+        ${reached
+          ? "The calculated whole-share purchase reaches or passes your target average."
+          : "The calculated purchase gets as close as possible using whole shares."}
+        Exact mathematical requirement: ${number(requiredSharesExact)} shares.
+        Charges are not included.
+      </div>
+    `);
+  }
+
+  // -----------------------------
+  // 2. BUDGET-BASED SHARE PURCHASE
+  // -----------------------------
+
+  function calculateBudget() {
+    const price = getNumber("budgetPrice");
+    const budget = getNumber("budgetAmount");
+    const feePercent = getNumber("feePercent");
+    const output = "budgetResults";
+
+    if (!valid(price, budget, feePercent) ||
+        price <= 0 || budget <= 0 || feePercent < 0 || feePercent > 100) {
+      showResults(output, errorMessage("Enter a positive share price and budget. Charges allowance must be between 0 and 100%."));
+      return;
+    }
+
+    const usableBudget = budget / (1 + feePercent / 100);
+    const shares = Math.floor(usableBudget / price);
+    const purchaseCost = shares * price;
+    const estimatedCharges = purchaseCost * feePercent / 100;
+    const totalCost = purchaseCost + estimatedCharges;
+    const balance = budget - totalCost;
+
+    showResults(output, `
+      <h3>Calculation results</h3>
+      <div class="result-grid">
+        ${resultItem("Maximum shares affordable", number(shares))}
+        ${resultItem("Share purchase cost", currency(purchaseCost))}
+        ${resultItem("Estimated charges", currency(estimatedCharges))}
+        ${resultItem("Total estimated cost", currency(totalCost))}
+        ${resultItem("Remaining budget", currency(balance))}
+        ${resultItem("Budget utilization", budget ? (totalCost / budget * 100).toFixed(2) + "%" : "0%")}
+      </div>
+      <div class="message">
+        ${shares > 0
+          ? "You can purchase up to " + number(shares) + " whole shares within the entered budget."
+          : "Your budget is not sufficient to purchase one whole share at this price, including the charges allowance."}
+        Charges are estimated as a percentage of purchase value.
+      </div>
+    `);
+  }
+
+  // -----------------------------
+  // 3. NEW PURCHASE AVERAGE
+  // -----------------------------
+
+  function calculatePurchase() {
+    const oldShares = getNumber("oldShares");
+    const oldAverage = getNumber("oldAverage");
+    const newShares = getNumber("newShares");
+    const newPrice = getNumber("newPrice");
+    const fees = getNumber("purchaseFees");
+    const sellPriceRaw = document.getElementById("sellPrice").value.trim();
+    const sellPrice = sellPriceRaw === "" ? null : Number(sellPriceRaw);
+    const output = "purchaseResults";
+
+    if (!valid(oldShares, oldAverage, newShares, newPrice, fees) ||
+        oldShares < 0 || newShares <= 0 ||
+        !Number.isInteger(oldShares) || !Number.isInteger(newShares) ||
+        oldAverage < 0 || newPrice <= 0 || fees < 0 ||
+        (oldShares > 0 && oldAverage <= 0) ||
+        (sellPrice !== null && (!Number.isFinite(sellPrice) || sellPrice < 0))) {
+      showResults(output, errorMessage("Enter valid values. Share quantities must be whole numbers, and charges cannot be negative."));
+      return;
+    }
+
+    const existingCost = oldShares * oldAverage;
+    const newPurchaseCost = newShares * newPrice;
+    const totalShares = oldShares + newShares;
+    const totalCost = existingCost + newPurchaseCost + fees;
+    const average = totalCost / totalShares;
+
+    let sellResults = "";
+    if (sellPrice !== null) {
+      const marketValue = totalShares * sellPrice;
+      const profitLoss = marketValue - totalCost;
+      const returnPercent = totalCost > 0 ? (profitLoss / totalCost) * 100 : 0;
+
+      sellResults = `
+        ${resultItem("Value at target selling price", currency(marketValue))}
+        ${resultItem("Estimated profit / loss", currency(profitLoss), profitLoss >= 0 ? "positive" : "negative")}
+        ${resultItem("Estimated return", returnPercent.toFixed(2) + "%", profitLoss >= 0 ? "positive" : "negative")}
+      `;
+    }
+
+    showResults(output, `
+      <h3>Calculation results</h3>
+      <div class="result-grid">
+        ${resultItem("Total shares after purchase", number(totalShares))}
+        ${resultItem("New average price", currency(average))}
+        ${resultItem("Existing investment", currency(existingCost))}
+        ${resultItem("New purchase cost", currency(newPurchaseCost))}
+        ${resultItem("Additional charges", currency(fees))}
+        ${resultItem("Total invested amount", currency(totalCost))}
+        ${sellResults}
+      </div>
+      <div class="message">
+        The revised average includes the entered additional charges.
+        Existing transaction charges, taxes and other costs are not included unless entered.
+      </div>
+    `);
+  }
+
+  // -----------------------------
+  // 4. PORTFOLIO TRACKER
+  // -----------------------------
+
+  let portfolioRows = 0;
+
+  function addPortfolioRow(name = "", quantity = "", average = "", current = "") {
+    portfolioRows++;
+    const rowId = portfolioRows;
+    const tbody = document.getElementById("portfolioBody");
+    const row = document.createElement("tr");
+
+    row.dataset.id = rowId;
+    row.innerHTML = `
+      <td><input class="table-input stock-name" placeholder="Stock name" value="${escapeHTML(name)}"></td>
+      <td><input class="table-input stock-quantity" type="number" min="0" step="1" placeholder="0" value="${escapeHTML(quantity)}"></td>
+      <td><input class="table-input stock-average" type="number" min="0" step="any" placeholder="0.00" value="${escapeHTML(average)}"></td>
+      <td><input class="table-input stock-current" type="number" min="0" step="any" placeholder="0.00" value="${escapeHTML(current)}"></td>
+      <td class="invested">—</td>
+      <td class="market-value">—</td>
+      <td class="profit-loss">—</td>
+      <td class="return-value">—</td>
+      <td><button class="remove-btn" onclick="removePortfolioRow(this)">Remove</button></td>
+    `;
+
+    tbody.appendChild(row);
+  }
+
+  function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    })[char]);
+  }
+
+  function removePortfolioRow(button) {
+    button.closest("tr").remove();
+    calculatePortfolio();
+  }
+
+  function calculatePortfolio() {
+    const rows = [...document.querySelectorAll("#portfolioBody tr")];
+
+    let totalInvested = 0;
+    let totalMarketValue = 0;
+    let validRows = 0;
+    let invalidRows = 0;
+
+    rows.forEach(row => {
+      const quantity = Number(row.querySelector(".stock-quantity").value);
+      const average = Number(row.querySelector(".stock-average").value);
+      const current = Number(row.querySelector(".stock-current").value);
+
+      const complete = [
+        row.querySelector(".stock-quantity").value,
+        row.querySelector(".stock-average").value,
+        row.querySelector(".stock-current").value
+      ].every(value => value.trim() !== "");
+
+      if (!complete) {
+        ["invested", "market-value", "profit-loss", "return-value"].forEach(className => {
+          row.querySelector("." + className).textContent = "—";
+        });
+        return;
+      }
+
+      if (!valid(quantity, average, current) ||
+          quantity <= 0 || !Number.isInteger(quantity) ||
+          average <= 0 || current < 0) {
+        invalidRows++;
+        ["invested", "market-value", "profit-loss", "return-value"].forEach(className => {
+          row.querySelector("." + className).textContent = "Invalid";
+        });
+        return;
+      }
+
+      const invested = quantity * average;
+      const marketValue = quantity * current;
+      const pnl = marketValue - invested;
+      const returnPercent = (pnl / invested) * 100;
+
+      totalInvested += invested;
+      totalMarketValue += marketValue;
+      validRows++;
+
+      row.querySelector(".invested").textContent = currency(invested);
+      row.querySelector(".market-value").textContent = currency(marketValue);
+      row.querySelector(".profit-loss").textContent = currency(pnl);
+      row.querySelector(".profit-loss").className =
+        "profit-loss " + (pnl >= 0 ? "positive" : "negative");
+      row.querySelector(".return-value").textContent = returnPercent.toFixed(2) + "%";
+      row.querySelector(".return-value").className =
+        "return-value " + (pnl >= 0 ? "positive" : "negative");
+    });
+
+    const totalPnl = totalMarketValue - totalInvested;
+    const totalReturn = totalInvested > 0 ? totalPnl / totalInvested * 100 : 0;
+
+    showResults("portfolioResults", `
+      <h3>Portfolio summary</h3>
+      <div class="result-grid">
+        ${resultItem("Total invested", currency(totalInvested))}
+        ${resultItem("Current market value", currency(totalMarketValue))}
+        ${resultItem("Total unrealized P/L", currency(totalPnl), totalPnl >= 0 ? "positive" : "negative")}
+        ${resultItem("Overall portfolio return", totalReturn.toFixed(2) + "%", totalPnl >= 0 ? "positive" : "negative")}
+        ${resultItem("Valid holdings", number(validRows))}
+        ${resultItem("Rows with invalid data", number(invalidRows))}
+      </div>
+      <div class="message">
+        Totals include only complete, valid holding rows. Incomplete rows are ignored.
+        ${invalidRows ? "Correct the invalid rows to include them in the totals." : ""}
+      </div>
+    `);
+  }
+
+  function resetPortfolio() {
+    if (!confirm("Clear all portfolio holdings?")) return;
+    document.getElementById("portfolioBody").innerHTML = "";
+    document.getElementById("portfolioResults").innerHTML = "";
+    document.getElementById("portfolioResults").classList.remove("show");
+    portfolioRows = 0;
+    addPortfolioRow();
+  }
+
+  // Start with one blank portfolio row.
+  addPortfolioRow();
+</script>
+</body>
+</html>
